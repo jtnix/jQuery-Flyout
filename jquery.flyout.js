@@ -2,6 +2,7 @@
  * jQuery FlyOut
  *
  * version 0.21 (July 21, 2008)
+ * version 0.22 (July 22, 2008) notes: minor reordering to loadingSrc logic.
  *
  * Dual licensed under the MIT and GPL licenses:
  *   http://www.opensource.org/licenses/mit-license.php
@@ -92,11 +93,7 @@ $.fn.extend({flyout : function(options) {
 			loader: 'loader',
 			loaderZIndex: 500,
 			widthMargin: 40,
-			heightMargin: 40,
-      offsetX: 0,
-      offsetY: 0,
-      startHeight: 0,
-      startWidth: 0
+			heightMargin: 40
 		}, options);
 	
 		function flyOut(it) {
@@ -108,10 +105,8 @@ $.fn.extend({flyout : function(options) {
 			sL = $(window).scrollLeft();
 			sT = $(window).scrollTop();
 			tloc = thumb.offset();
-      tloc.left = tloc.left + o.offsetX;
-      tloc.top = tloc.top + o.offsetY;
-			th = (o.startHeight > 0 ? o.startHeight : thumb.height());
-			tw = (o.startWidth > 0 ? o.startWidth : thumb.width());
+			th = thumb.height();
+			tw = thumb.width();
 			$('<div></div>').attr('id',o.loader)
 							.appendTo('body')
 							.css({'position':'absolute',
@@ -144,7 +139,7 @@ $.fn.extend({flyout : function(options) {
 									 	);
 			}
 			$(bigimg).load(function() {
-				imgtag = $('<img/>').attr('src',holder.attr('href')).attr('title',holder.attr('title')+" - Click again to put away.").height(th).width(tw);
+				imgtag = $('<img/>').attr('src',holder.attr('href')).attr('title',thumb.attr('title')+" - Click again to put away.").height(th).width(tw);
 	
 				max_x = $(window).width()-o.widthMargin;
 				max_y = $(window).height()-o.heightMargin;
