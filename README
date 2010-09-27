@@ -1,0 +1,6 @@
+The flyout() method provides an alternate means of loading and display sub-content
+with a nifty flyout animation technique.
+Currently, flyout only supports img tag sub-content.
+
+Please see:  http://nixboxdesigns.com/demos/jquery-image-flyout.php
+for tutorials, options manual and support information.
