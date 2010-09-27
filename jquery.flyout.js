@@ -2,7 +2,27 @@
  * jQuery FlyOut
  *
  * version 0.21 (July 21, 2008)
- * version 0.22 (July 22, 2008) notes: minor reordering to loadingSrc logic.
+ * version 0.22 (July 22, 2008) 
+ 	notes: minor reordering to loadingSrc logic.
+ * version 0.23 (August 15, 2008) 
+ 	added: config options for loadingText and closeTip to facilitate locale.
+			Thanks Tony for the nudge.
+ * version 0.24 (Oct 2, 2008) 
+ 	added: customize start location and size of flyout, if different 
+			from thumb link. Thanks to Jake Kronika for this patch.
+ * version 1.0 (Oct 11, 2008) 
+ 	added: support for final flyout location via destElement and destPadding: 
+			define a fixed container anywhere in the document and the pic will 
+			fly to that location, regardless of viewport position. 
+ 	fixed: clicking on open source link no longer reopens same image. 
+	added: 4 callbacks for start and finish of flyOut and putAway animations. 
+	fixed: putAway function to put back to correct location, in case 
+			thumb has moved (page or div scroll, etc)
+ * version 1.01 (Nov 16, 2008)
+ 	fixed: Opera 9.x doesn't report window.height() correctly - patched with code
+			from jquery Bug 3117:  http://dev.jquery.com/ticket/3117
+			note: once this is patched in jQuery core, this may be removed.
+ *  
  *
  * Dual licensed under the MIT and GPL licenses:
  *   http://www.opensource.org/licenses/mit-license.php
@@ -44,14 +64,50 @@
  *						this value is effectively divided between the top and bottom margin
  *						default: 40
  *
+ *			loadingText: text shown when image is loading
+ *
+ *			closeTip: tip text for image alt/title tags
+ *
+ *			destElement: the destination container - overrides height and widthMargins
+ *						specified in CSS notation - e.g. "#picContainer"
+ *						default: none
+ *
+ *			destPadding: number of pixels to pad when flying out to destElement
+ *						default: 10
+ *
+ *			startOffsetX: horizontal offset added to thumb left value for start of flyout animation
+ *						Hint: can be negative.
+ *						default: 0
+ *
+ *			startOffsetY: vertical offset added to thumb top value for start of flyout animation.
+ *						default: 0
+ *
+ *			startHeight: overrides starting height of flyout animation
+ *						default: 0  (uses thumb image height by default)
+ *
+ *			startWidth: overrides starting width of flyout animation
+ *						default: 0  (uses thumb image width by default)
+ *
+ *			flyOutStart: function to run at start of flyout animation
+ *						default: none
+ *
+ *			flyOutFinish: function to run at finish of flyout animation
+ *						default: none
+ *
+ *			putAwayStart: function to run at start of putaway animation
+ *						default: none
+ *
+ *			putAwayFinish: function to run at finish of putaway animation
+ *						default: none
+ *
  * For more details see: http://nixbox.com/demos/jquery.flyout.php
  *
  * @example $('.thumb').flyout();
  * @desc standard flyouts applied to all elements with the 'thumbs' class. 
  * 
  * @example $('.thumb').flyout({loadingSrc:'images/thumb-loading.gif',
-								outEase:'easeOutCirc',
-								inEase:'easeOutBounce'});
+ *								outEase:'easeOutCirc',
+ *								inEase:'easeOutBounce'});
  * @desc flyouts created with different ease in and ease out and a loading animation image is specified
  *
  * @name flyout
@@ -93,7 +149,18 @@ $.fn.extend({flyout : function(options) {
 			loader: 'loader',
 			loaderZIndex: 500,
 			widthMargin: 40,
-			heightMargin: 40
+			heightMargin: 40,
+			loadingText : "Loading...",
+			closeTip : " - Click here to close",
+			destPadding: 20,
+			startOffsetX: 0,
+			startOffsetY: 0,
+			startHeight: 0,
+			startWidth: 0,
+			flyOutStart: function() {},
+			flyOutFinish: function() {},
+			putAwayStart: function() {},
+			putAwayFinish: function() {}
 		}, options);
 	
 		function flyOut(it) {
@@ -105,8 +172,11 @@ $.fn.extend({flyout : function(options) {
 			sL = $(window).scrollLeft();
 			sT = $(window).scrollTop();
 			tloc = thumb.offset();
-			th = thumb.height();
-			tw = thumb.width();
+			tloc.left += o.startOffsetX;
+			tloc.top += o.startOffsetY;
+			th = (o.startHeight > 0 ? o.startHeight : thumb.height());
+			tw = (o.startWidth > 0 ? o.startWidth : thumb.width());
+			
 			$('<div></div>').attr('id',o.loader)
 							.appendTo('body')
 							.css({'position':'absolute',
@@ -118,32 +188,47 @@ $.fn.extend({flyout : function(options) {
 								'display':'block',
 								'z-index':o.loaderZIndex});
 			if (o.loadingSrc) {
-				$('#'+o.loader).append($('<img/>').load(function() {
-													$(this)
-														.css({'position':'relative',
-															 'top':th/2-(this.height/2),
-															 'left':tw/2-(this.width/2)})
-														.attr('alt','Loading...Please wait');
-													})
-												.attr('src',o.loadingSrc)
-										);
+				$('#'+o.loader).append($('<img/>')
+								.load(function() {
+										$(this)
+											.css({'position':'relative',
+												 'top':th/2-(this.height/2),
+												 'left':tw/2-(this.width/2)})
+											.attr('alt',o.loadingText);
+										})
+									.attr('src',o.loadingSrc)
+								);
 			}
 			else {
 				$('#'+o.loader).css('background-color','#000')
-								.append($('<span></span>').text('loading')
-															.css({'position':'relative',
-																 'top':'2px',
-																 'left':'2px',
-																 'color':'#FFF',
-																 'font-size':'9px'})
+								.append($('<span></span>')
+										  	.text(o.loadingText)
+											.css({'position':'relative',
+												 'top':'2px',
+												 'left':'2px',
+												 'color':'#FFF',
+												 'font-size':'9px'})
 									 	);
 			}
 			$(bigimg).load(function() {
-				imgtag = $('<img/>').attr('src',holder.attr('href')).attr('title',thumb.attr('title')+" - Click again to put away.").height(th).width(tw);
-	
-				max_x = $(window).width()-o.widthMargin;
-				max_y = $(window).height()-o.heightMargin;
+				imgtag = $('<img/>').attr('src',holder.attr('href')).attr('title',thumb.attr('title')+o.closeTip).attr('alt',thumb.attr('alt')+o.closeTip).height(th).width(tw);
 				
+				o.flyOutStart.call(it);
+
+				if (o.destElement) {
+					var $dest = $(o.destElement);
+					max_x = $dest.innerWidth() - (o.destPadding*2);
+					max_y = $dest.innerHeight() - (o.destPadding*2);
+				}
+				else {
+					max_x = $(window).width()-o.widthMargin;
+					if ($.browser.opera) 
+						wh = document.getElementsByTagName('html')[0].clientHeight;
+					else 
+						wh = $(window).height();
+					max_y = wh-o.heightMargin;
+				}
+
 				width = bigimg.width;
 				height = bigimg.height;
 	
@@ -160,38 +245,62 @@ $.fn.extend({flyout : function(options) {
 				dh = Math.round(height * y_dim);
 				if (dw>width) {dw = width}
 				if (dh>height) {dh = height}
-				dl = Math.round(($(window).width()/2)-(dw/2)+sL);
-				dt = Math.round(($(window).height()/2)-(dh/2)+sT);
-	
+				
+				if (o.destElement) {
+					dPos = $dest.offset();
+					dl = Math.round(($dest.outerWidth()/2)-(dw/2)+dPos.left);
+					dt = Math.round(($dest.outerHeight()/2)-(dh/2)+dPos.top);
+				}
+				else {
+					dl = Math.round(($(window).width()/2)-(dw/2)+sL);
+					if ($.browser.opera) 
+						wh = document.getElementsByTagName('html')[0].clientHeight;
+					else 
+						wh = $(window).height();
+					dt = Math.round((wh/2)-(dh/2)+sT);
+				}
+				
 				$('#'+o.loader).empty().css('opacity',1).append(imgtag).width('auto').height('auto').animate({top:dt, left:dl},{duration:o.outSpeed, queue:false, easing:o.outEase});
-				$('#'+o.loader+' '+subType).animate({height:dh, width:dw}, o.outSpeed, o.outEase, function() { 	
-																					shown = true;
-																					animating=false;
-																					$('#'+o.loader+' '+subType).click(function(){putAway(null)})
-																				});
+				$('#'+o.loader+' '+subType).animate({height:dh, width:dw}, o.outSpeed, o.outEase,
+				function() {
+					o.flyOutFinish.call(it);
+					shown = it;
+					animating=false;
+					$('#'+o.loader+' '+subType).click(function(){putAway(null)})
+				});
 			});
 			bigimg.src = holder.attr('href');
 		}
 	
 	
 		function putAway(next) {
-			// not necessary right now, but jic.
+			// for future development:
 			if (animating == true || shown == false) {return false;}
+			o.putAwayStart.call(shown);
 			
 			animating = true;
+			
+			// check thumb loc again, in case it moved...
+			tloc = thumb.offset();
+			tloc.left += o.startOffsetX;
+			tloc.top += o.startOffsetY;
+
 			$('#'+o.loader).animate({top:tloc.top, left:tloc.left},{duration:o.inSpeed, queue:false, easing:o.inEase});
-			$('#'+o.loader+' '+subType).animate({height:th, width:tw}, o.inSpeed, o.inEase, function() {
-																		 $('#'+o.loader).css('display','none').remove(); 
-																		 shown = false;
-																		 animating=false;
-																		 bigimg=null;			
-																		 if (next) {
-																			flyOut(next);
-																		 }
-			});
+			$('#'+o.loader+' '+subType).animate({height:th, width:tw}, o.inSpeed, o.inEase, 
+					function() {
+						$('#'+o.loader).css('display','none').remove(); 
+						o.putAwayFinish.call(shown);
+						animating=false;
+						bigimg=null;			
+						if (next && next != shown) {
+							shown = false;
+							flyOut(next);
+						}
+						shown = false;
+					});
 		}
 		
-		return this;
+		return this;	// never break the chain
 		
 	}
 });
