@@ -32,7 +32,7 @@ Using the new `outOpacity` and `inOpacity`, you can create subtle fading effects
 * supports jQuery `noConflict` mode.
 * accurately calculates destination size including borders.
 
-The latest version 1.3 of jQuery Flyout has been tested successfully with jQuery versions 2.2.4 and 1.12.4 and should work with jQuery version 1.7 or greater.
+The latest version 1.3 of jQuery Flyout has been tested successfully with jQuery versions 3.3.1, 2.2.4 and 1.12.4 and should work with jQuery version 1.7 or greater.
 
 ## jQuery Flyout Usage and Options
 
@@ -150,27 +150,38 @@ Determines default sizing of shown image. A `displayType` of `default` respects 
 ## jQuery Flyout Release History
 
 * version 0.21 (July 21, 2008)
+
 * version 0.22 (July 22, 2008)
+
   * notes: minor reordering to loadingSrc logic.
+
 * version 0.23 (August 15, 2008)
+
   * added: config options for loadingText and closeTip to facilitate locale. Thanks Tony for the nudge.
+
 * version 0.24 (Oct 2, 2008)
+
   * added: customize start location and size of flyout, if different from thumb link. Thanks to Jake Kronika for this patch.
+
 * version 1.0 (Oct 11, 2008)
   * added: support for final flyout location via destElement and destPadding: define a fixed container anywhere in the document and the pic will fly to that location, regardless of viewport position.
   * fixed: clicking on open source link no longer reopens same image.
   * added: 4 callbacks for start and finish of flyOut and putAway animations.
   * fixed: putAway function to put back to correct location, in case thumb has moved (page or div scroll, etc)
 * version 1.1 (Nov 16, 2008)
+
   * fixed: Opera 9.5+ doesn't report window.height() correctly - patched with code from jquery Bug 3117: http://dev.jquery.com/ticket/3117 note: once this is patched in jQuery core, or fixed in Opera this may eventually be removed.
   * added: when flyOut image is completed, a customizable class (default to 'shown') is appended to the thumb image container so an external event can trigger the click to close any open elements. See demo page for example.
+
 * version 1.2 (Feb 13, 2011)
+
   * added: inOpacity, outOpacity, loaderOpacity and fullSizeImage
   * fixed: fixed start and animation positioning if loader has border
   * fixed: blank space at bottom of image by adding line-height:0px to flyout
   * added: full closure to plugin to allow cross-library compatitibility
   * fixed: various issues discovered with jsLint
   * removed: Opera hack, problem was fixed in version 10 of Opera
+
 * version 1.3 (May 29th, 2018)
 
   * added: useNative flag to switch up method for determining actual viewport dimensions
